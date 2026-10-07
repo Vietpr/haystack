@@ -14,7 +14,8 @@ from haystack.lazy_imports import LazyImport
 
 with LazyImport("Run 'pip install python-pptx'") as pptx_import:
     from pptx import Presentation
-    from pptx.text.text import _Paragraph
+    from pptx.oxml.text import CT_RegularTextRun
+    from pptx.text.text import _Paragraph, _Run
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ logger = logging.getLogger(__name__)
 class PPTXToDocument:
     """
     Converts PPTX files to Documents.
+
+    Soft line breaks (Shift+Enter) are preserved as vertical tabs for every link format.
 
     Usage example:
 
@@ -101,7 +104,11 @@ class PPTXToDocument:
         if self.link_format == "none":
             return paragraph.text
         parts = []
-        for run in paragraph.runs:
+        for element in paragraph._p.content_children:
+            if not isinstance(element, CT_RegularTextRun):
+                parts.append(element.text)
+                continue
+            run = _Run(r=element, parent=paragraph)
             if run.hyperlink and run.hyperlink.address:
                 if self.link_format == "markdown":
                     parts.append(f"[{run.text}]({run.hyperlink.address})")

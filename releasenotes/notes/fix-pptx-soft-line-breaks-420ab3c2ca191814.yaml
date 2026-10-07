@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Preserve soft line breaks in ``PPTXToDocument`` when ``link_format`` is
+    ``markdown`` or ``plain``, matching the default ``none`` format.

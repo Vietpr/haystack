@@ -4,9 +4,12 @@
 
 import logging
 import os
+from io import BytesIO
 from pathlib import Path
 
 import pytest
+from pptx import Presentation
+from pptx.util import Inches
 
 from haystack.components.converters.pptx import PPTXToDocument
 from haystack.dataclasses import ByteStream
@@ -123,3 +126,26 @@ class TestPPTXToDocument:
 
         assert "https://example.com" not in content
         assert "Example" in content
+
+    @pytest.mark.parametrize(
+        "link_format, expected_link",
+        [("none", "Alice"), ("markdown", "[Alice](https://example.com)"), ("plain", "Alice (https://example.com)")],
+    )
+    def test_preserves_soft_line_breaks(self, link_format, expected_link):
+        presentation = Presentation()
+        slide = presentation.slides.add_slide(presentation.slide_layouts[6])
+        paragraph = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(7), Inches(2)).text_frame.paragraphs[0]
+        paragraph.add_run().text = "Account: "
+        run = paragraph.add_run()
+        run.text = "Alice"
+        run.hyperlink.address = "https://example.com"
+        paragraph.add_line_break()
+        paragraph.add_run().text = "Balance: 100"
+        buffer = BytesIO()
+        presentation.save(buffer)
+
+        converter = PPTXToDocument(link_format=link_format)
+        documents = converter.run(sources=[ByteStream(data=buffer.getvalue())])["documents"]
+
+        assert len(documents) == 1
+        assert documents[0].content == f"Account: {expected_link}\vBalance: 100"

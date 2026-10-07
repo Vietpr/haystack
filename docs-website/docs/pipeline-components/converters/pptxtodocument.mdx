@@ -27,6 +27,8 @@ Convert PPTX files to documents.
 
 The `PPTXToDocument` component converts PPTX files into documents. It takes a list of file paths or [`ByteStream`](../../concepts/data-classes.mdx#bytestream) objects as input and outputs the converted result as a list of documents. Optionally, you can attach metadata to the documents through the `meta` input parameter.
 
+Soft line breaks (Shift+Enter) are preserved as vertical tabs (`\v`) for every `link_format` value: `none`, `markdown`, and `plain`.
+
 ## Usage
 
 First, install the`python-pptx` package to start using this converter:
